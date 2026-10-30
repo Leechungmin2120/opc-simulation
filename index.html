@@ -66,4 +66,564 @@
             display: flex;
             flex-direction: column;
             gap: 20px;
-            max-height: calc(100vh - 12
+            max-height: calc(100vh - 120px);
+            overflow-y: auto;
+        }
+
+        .section-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        label {
+            font-size: 0.85rem;
+            color: var(--text-sub);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        select, input[type="range"] {
+            width: 100%;
+            background: #0f172a;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 8px;
+            border-radius: 6px;
+            outline: none;
+        }
+
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        button {
+            background: var(--border-color);
+            color: var(--text-main);
+            border: none;
+            padding: 10px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        button.primary {
+            background: #2563eb;
+            color: white;
+        }
+
+        button.success {
+            background: #16a34a;
+            color: white;
+        }
+
+        button.accent {
+            background: #9333ea;
+            color: white;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .metric-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .metric-title {
+            font-size: 0.75rem;
+            color: var(--text-sub);
+        }
+
+        .metric-value {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--accent-green);
+        }
+
+        .metric-sub {
+            font-size: 0.75rem;
+            color: var(--accent-blue);
+        }
+
+        .canvas-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .canvas-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .canvas-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        canvas {
+            background-color: #000;
+            border-radius: 4px;
+            image-rendering: pixelated;
+            max-width: 100%;
+            height: auto;
+        }
+
+        .report-box {
+            background: #020617;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            font-family: "Pretendard Variable", monospace;
+            font-size: 0.8rem;
+            color: #38bdf8;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🔬 반도체 OPC 시뮬레이터 <span>(2D Optical Proximity Correction)</span></h1>
+        <div style="font-size: 0.85rem; color: var(--text-sub);">
+            기초 단위 격자 (λ): <strong>3.5 nm</strong> | Metal1 Layout
+        </div>
+    </header>
+
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <div class="metric-title">패턴 일치도 (IoU)</div>
+            <div class="metric-value" id="val-iou">0.0%</div>
+            <div class="metric-sub" id="sub-iou">Pre-OPC 대비: +0.0%p</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-title">불일치 면적 (Error Area)</div>
+            <div class="metric-value" id="val-area" style="color: var(--accent-red);">0.0 nm²</div>
+            <div class="metric-sub" id="sub-cells">0 cells</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-title">측정 선폭 (Measured CD)</div>
+            <div class="metric-value" id="val-cd" style="color: var(--accent-blue);">0.0 nm</div>
+            <div class="metric-sub" id="sub-cd">목표 선폭: 10.5 nm</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-title">에지 위치 오차 (Max EPE)</div>
+            <div class="metric-value" id="val-epe" style="color: var(--accent-purple);">0.00 nm</div>
+            <div class="metric-sub">Max Edge Deviation</div>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="control-panel">
+            <div>
+                <div class="section-title">📐 1. 목표 레이아웃 선택</div>
+                <div class="input-group">
+                    <label>셀 타겟</label>
+                    <select id="sel-target" onchange="loadTarget()">
+                        <option value="INV_X1">INV_X1 (18λ × 54λ)</option>
+                        <option value="NAND2_X4">NAND2_X4 (45λ × 54λ)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <div class="section-title">⚙️ 2. 광학 및 PR 파라미터</div>
+                <div class="input-group">
+                    <label>빛 분산 (Sigma σ) <span id="lbl-sigma">1.2</span></label>
+                    <input type="range" id="rng-sigma" min="0.5" max="2.5" step="0.1" value="1.2" oninput="updateSim()">
+                </div>
+                <div class="input-group">
+                    <label>현상 임계값 (PR Threshold) <span id="lbl-th">0.45</span></label>
+                    <input type="range" id="rng-th" min="0.2" max="0.8" step="0.05" value="0.45" oninput="updateSim()">
+                </div>
+            </div>
+
+            <div>
+                <div class="section-title">🛠️ 3. OPC 수동 파라미터 보정</div>
+                <div class="input-group">
+                    <label>전역 바이어스 (Global Bias) <span id="lbl-bias">0</span></label>
+                    <input type="range" id="rng-bias" min="-2" max="2" step="1" value="0" oninput="applyParamOPC()">
+                </div>
+                <div class="input-group">
+                    <label>선끝 연장 (Hammerhead) <span id="lbl-hh">0</span></label>
+                    <input type="range" id="rng-hh" min="0" max="3" step="1" value="0" oninput="applyParamOPC()">
+                </div>
+                <div class="input-group">
+                    <label>세리프 크기 (Serif Size) <span id="lbl-serif">0</span></label>
+                    <input type="range" id="rng-serif" min="0" max="3" step="1" value="0" oninput="applyParamOPC()">
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button class="accent" onclick="runAutoOptimization()">🚀 자동 OPC 최적화 실행</button>
+                <button class="primary" onclick="resetMask()">🔄 마스크 초기화 (Pre-OPC)</button>
+                <button class="success" onclick="copyReport()">📋 결과 논문 리포트 복사</button>
+            </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+            <div class="canvas-grid">
+                <div class="canvas-card">
+                    <div class="canvas-title"><span style="color:#38bdf8;">●</span> (a) 목표 패턴 (Target)</div>
+                    <canvas id="cvs-target"></canvas>
+                </div>
+                <div class="canvas-card">
+                    <div class="canvas-title"><span style="color:#c084fc;">●</span> (b) 수정 마스크 (Mask)</div>
+                    <canvas id="cvs-mask"></canvas>
+                </div>
+                <div class="canvas-card">
+                    <div class="canvas-title"><span style="color:#f43f5e;">●</span> (c) 2D 노광량 Map</div>
+                    <canvas id="cvs-intensity"></canvas>
+                </div>
+            </div>
+
+            <div class="canvas-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+                <div class="canvas-card">
+                    <div class="canvas-title"><span style="color:#22c55e;">●</span> (d) 현상 후 PR 패턴</div>
+                    <canvas id="cvs-pr"></canvas>
+                </div>
+                <div class="canvas-card">
+                    <div class="canvas-title"><span style="color:#eab308;">●</span> (e) 오차 분석 (Target vs PR)</div>
+                    <canvas id="cvs-error"></canvas>
+                </div>
+                <div class="canvas-card" style="justify-content: flex-start; align-items: stretch;">
+                    <div class="canvas-title">📝 실시간 요약 리포트</div>
+                    <div class="report-box" id="report-text">계산 중...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const LAMBDA = 3.5; // nm
+        let gridW = 36, gridH = 108;
+        let targetGrid = [], maskGrid = [], prGrid = [], intensityGrid = [];
+        let preMetrics = { iou: 0, area: 0, epe: 0, cd: 0 };
+
+        const cvsTarget = document.getElementById('cvs-target');
+        const cvsMask = document.getElementById('cvs-mask');
+        const cvsIntensity = document.getElementById('cvs-intensity');
+        const cvsPR = document.getElementById('cvs-pr');
+        const cvsError = document.getElementById('cvs-error');
+
+        function initGrids(w, h) {
+            gridW = w; gridH = h;
+            targetGrid = Array(h).fill().map(() => Array(w).fill(0));
+            maskGrid = Array(h).fill().map(() => Array(w).fill(0));
+            
+            [cvsTarget, cvsMask, cvsIntensity, cvsPR, cvsError].forEach(c => {
+                c.width = w * 4;
+                c.height = h * 4;
+            });
+        }
+
+        function loadTarget() {
+            const type = document.getElementById('sel-target').value;
+            if (type === 'INV_X1') {
+                initGrids(36, 108);
+                for (let r = 8; r < 20; r++) for (let c = 4; c < 32; c++) targetGrid[r][c] = 1;
+                for (let r = 20; r < 100; r++) for (let c = 12; c < 18; c++) targetGrid[r][c] = 1;
+                for (let r = 70; r < 100; r++) for (let c = 24; c < 30; c++) targetGrid[r][c] = 1;
+            } else {
+                initGrids(90, 108);
+                for (let r = 8; r < 20; r++) for (let c = 8; c < 82; c++) targetGrid[r][c] = 1;
+                for (let r = 20; r < 100; r++) for (let c = 16; c < 22; c++) targetGrid[r][c] = 1;
+                for (let r = 20; r < 100; r++) for (let c = 38; c < 44; c++) targetGrid[r][c] = 1;
+                for (let r = 20; r < 100; r++) for (let c = 60; c < 66; c++) targetGrid[r][c] = 1;
+            }
+            resetMask();
+        }
+
+        function resetMask() {
+            document.getElementById('rng-bias').value = 0;
+            document.getElementById('rng-hh').value = 0;
+            document.getElementById('rng-serif').value = 0;
+            document.getElementById('lbl-bias').innerText = 0;
+            document.getElementById('lbl-hh').innerText = 0;
+            document.getElementById('lbl-serif').innerText = 0;
+
+            for (let r = 0; r < gridH; r++) {
+                for (let c = 0; c < gridW; c++) {
+                    maskGrid[r][c] = targetGrid[r][c];
+                }
+            }
+            updateSim(true);
+        }
+
+        function applyParamOPC() {
+            const bias = parseInt(document.getElementById('rng-bias').value);
+            const hh = parseInt(document.getElementById('rng-hh').value);
+            const serif = parseInt(document.getElementById('rng-serif').value);
+
+            document.getElementById('lbl-bias').innerText = bias;
+            document.getElementById('lbl-hh').innerText = hh;
+            document.getElementById('lbl-serif').innerText = serif;
+
+            for (let r = 0; r < gridH; r++) {
+                for (let c = 0; c < gridW; c++) {
+                    maskGrid[r][c] = targetGrid[r][c];
+                }
+            }
+
+            if (bias !== 0) {
+                let temp = maskGrid.map(row => [...row]);
+                for (let r = 1; r < gridH - 1; r++) {
+                    for (let c = 1; c < gridW - 1; c++) {
+                        if (targetGrid[r][c] === 1) {
+                            if (bias > 0) {
+                                for (let dr = -bias; dr <= bias; dr++)
+                                    for (let dc = -bias; dc <= bias; dc++)
+                                        if (r+dr>=0 && r+dr<gridH && c+dc>=0 && c+dc<gridW)
+                                            temp[r+dr][c+dc] = 1;
+                            }
+                        }
+                    }
+                }
+                maskGrid = temp;
+            }
+
+            for (let r = 1; r < gridH - 1; r++) {
+                for (let c = 1; c < gridW - 1; c++) {
+                    if (targetGrid[r][c] === 1) {
+                        if (targetGrid[r+1][c] === 0 && hh > 0) {
+                            for (let h = 1; h <= hh; h++)
+                                if (r+h < gridH) maskGrid[r+h][c] = 1;
+                        }
+                        let neighbors = targetGrid[r-1][c] + targetGrid[r+1][c] + targetGrid[r][c-1] + targetGrid[r][c+1];
+                        if (neighbors === 2 && serif > 0) {
+                            for (let dr = -serif; dr <= serif; dr++)
+                                for (let dc = -serif; dc <= serif; dc++)
+                                    if (r+dr>=0 && r+dr<gridH && c+dc>=0 && c+dc<gridW)
+                                        maskGrid[r+dr][c+dc] = 1;
+                        }
+                    }
+                }
+            }
+
+            updateSim(false);
+        }
+
+        function updateSim(isPre = false) {
+            const sigma = parseFloat(document.getElementById('rng-sigma').value);
+            const th = parseFloat(document.getElementById('rng-th').value);
+
+            document.getElementById('lbl-sigma').innerText = sigma;
+            document.getElementById('lbl-th').innerText = th;
+
+            intensityGrid = Array(gridH).fill().map(() => Array(gridW).fill(0));
+            prGrid = Array(gridH).fill().map(() => Array(gridW).fill(0));
+
+            const radius = Math.ceil(sigma * 3);
+            for (let r = 0; r < gridH; r++) {
+                for (let c = 0; c < gridW; c++) {
+                    let sum = 0, weightSum = 0;
+                    for (let dr = -radius; dr <= radius; dr++) {
+                        for (let dc = -radius; dc <= radius; dc++) {
+                            let nr = r + dr, nc = c + dc;
+                            if (nr >= 0 && nr < gridH && nc >= 0 && nc < gridW) {
+                                let w = Math.exp(-(dr*dr + dc*dc) / (2 * sigma * sigma));
+                                sum += maskGrid[nr][nc] * w;
+                                weightSum += w;
+                            }
+                        }
+                    }
+                    let val = sum / weightSum;
+                    intensityGrid[r][c] = val;
+                    prGrid[r][c] = val >= th ? 1 : 0;
+                }
+            }
+
+            let intersection = 0, union = 0, errorCells = 0;
+            for (let r = 0; r < gridH; r++) {
+                for (let c = 0; c < gridW; c++) {
+                    if (targetGrid[r][c] === 1 && prGrid[r][c] === 1) intersection++;
+                    if (targetGrid[r][c] === 1 || prGrid[r][c] === 1) union++;
+                    if (targetGrid[r][c] !== prGrid[r][c]) errorCells++;
+                }
+            }
+
+            let iou = (intersection / union) * 100;
+            let errorArea = errorCells * (LAMBDA * 0.5) * (LAMBDA * 0.5);
+            
+            let cdCells = 0;
+            let midR = Math.floor(gridH / 2);
+            for (let c = 0; c < gridW; c++) if (prGrid[midR][c] === 1) cdCells++;
+            let measuredCD = cdCells * (LAMBDA * 0.5);
+
+            let maxEPE = Math.sqrt(errorCells) * 0.35;
+
+            if (isPre) {
+                preMetrics = { iou, area: errorArea, epe: maxEPE, cd: measuredCD };
+            }
+
+            document.getElementById('val-iou').innerText = iou.toFixed(2) + '%';
+            document.getElementById('sub-iou').innerText = `Pre-OPC 대비: ${(iou - preMetrics.iou) >= 0 ? '+' : ''}${(iou - preMetrics.iou).toFixed(2)}%p`;
+            document.getElementById('val-area').innerText = errorArea.toFixed(1) + ' nm²';
+            document.getElementById('sub-cells').innerText = `${errorCells} cells`;
+            document.getElementById('val-cd').innerText = measuredCD.toFixed(2) + ' nm';
+            document.getElementById('val-epe').innerText = maxEPE.toFixed(2) + ' nm';
+
+            drawGrids();
+            updateReport(iou, errorArea, errorCells, maxEPE, measuredCD);
+        }
+
+        function drawGrids() {
+            drawCanvas(cvsTarget, targetGrid, '#38bdf8');
+            drawCanvas(cvsMask, maskGrid, '#c084fc');
+            drawIntensityCanvas(cvsIntensity, intensityGrid);
+            drawCanvas(cvsPR, prGrid, '#22c55e');
+            drawErrorCanvas(cvsError, targetGrid, prGrid);
+        }
+
+        function drawCanvas(cvs, grid, color) {
+            const ctx = cvs.getContext('2d');
+            ctx.clearRect(0, 0, cvs.width, cvs.height);
+            const cw = cvs.width / gridW, ch = cvs.height / gridH;
+            ctx.fillStyle = color;
+            for (let r = 0; r < gridH; r++) {
+                for (let c = 0; c < gridW; c++) {
+                    if (grid[r][c] === 1) ctx.fillRect(c * cw, r * ch, cw, ch);
+                }
+            }
+        }
+
+        function drawIntensityCanvas(cvs, grid) {
+            const ctx = cvs.getContext('2d');
+            const cw = cvs.width / gridW, ch = cvs.height / gridH;
+            for (let r = 0; r < gridH; r++) {
+                for (let c = 0; c < gridW; c++) {
+                    let val = grid[r][c];
+                    let hue = (1 - val) * 240;
+                    ctx.fillStyle = `hsl(${hue}, 100%, 50%)`;
+                    ctx.fillRect(c * cw, r * ch, cw, ch);
+                }
+            }
+        }
+
+        function drawErrorCanvas(cvs, target, pr) {
+            const ctx = cvs.getContext('2d');
+            ctx.clearRect(0, 0, cvs.width, cvs.height);
+            const cw = cvs.width / gridW, ch = cvs.height / gridH;
+            for (let r = 0; r < gridH; r++) {
+                for (let c = 0; c < gridW; c++) {
+                    if (target[r][c] === 1 && pr[r][c] === 1) {
+                        ctx.fillStyle = '#22c55e';
+                    } else if (target[r][c] === 1 && pr[r][c] === 0) {
+                        ctx.fillStyle = '#f43f5e';
+                    } else if (target[r][c] === 0 && pr[r][c] === 1) {
+                        ctx.fillStyle = '#38bdf8';
+                    } else continue;
+                    ctx.fillRect(c * cw, r * ch, cw, ch);
+                }
+            }
+        }
+
+        function runAutoOptimization() {
+            let bestIoU = 0, bestB = 0, bestH = 0, bestS = 0;
+            for (let b = -1; b <= 1; b++) {
+                for (let h = 0; h <= 2; h++) {
+                    for (let s = 0; s <= 2; s++) {
+                        document.getElementById('rng-bias').value = b;
+                        document.getElementById('rng-hh').value = h;
+                        document.getElementById('rng-serif').value = s;
+                        applyParamOPC();
+                        let curIoU = parseFloat(document.getElementById('val-iou').innerText);
+                        if (curIoU > bestIoU) {
+                            bestIoU = curIoU; bestB = b; bestH = h; bestS = s;
+                        }
+                    }
+                }
+            }
+            document.getElementById('rng-bias').value = bestB;
+            document.getElementById('rng-hh').value = bestH;
+            document.getElementById('rng-serif').value = bestS;
+            applyParamOPC();
+            alert(`최적화 완료!\n최적 파라미터: Bias=${bestB}, Hammerhead=${bestH}, Serif=${bestS}\n최고 IoU: ${bestIoU.toFixed(2)}%`);
+        }
+
+        function updateReport(iou, area, cells, epe, cd) {
+            const text = 
+`[반도체제작기술 중간 프로젝트 OPC 결과 요약서]
+================================================
+1. 시뮬레이션 설정 조건
+- 대상 표준 셀: ${document.getElementById('sel-target').value} Metal1
+- 광학 모델 (PSF Kernel): 2D 가우시안 (Sigma = ${document.getElementById('rng-sigma').value})
+- 감광액(PR) 현상 임계값: ${document.getElementById('rng-th').value}
+
+2. 정량적 보정 결과 분석
+------------------------------------------------
+[항목]             [Pre-OPC]       [Post-OPC]
+- 패턴 일치도(IoU)  : ${preMetrics.iou.toFixed(2)} %       ${iou.toFixed(2)} %
+- 불일치 오차 면적  : ${preMetrics.area.toFixed(1)} nm²     ${area.toFixed(1)} nm²
+- 오차 격자 수      : ${Math.round(preMetrics.area/0.76)} cells      ${cells} cells
+- 측정 선폭 (CD)    : ${preMetrics.cd.toFixed(2)} nm      ${cd.toFixed(2)} nm
+- 최대 에지 오차    : ${preMetrics.epe.toFixed(2)} nm      ${epe.toFixed(2)} nm
+------------------------------------------------
+
+3. 보정 효과 종합 검토
+- IoU 개선폭: +${(iou - preMetrics.iou).toFixed(2)}%p
+- 주요 적용 파라미터: Bias(${document.getElementById('rng-bias').value}), Hammerhead(${document.getElementById('rng-hh').value}), Serif(${document.getElementById('rng-serif').value})
+================================================`;
+            document.getElementById('report-text').innerText = text;
+        }
+
+        function copyReport() {
+            const text = document.getElementById('report-text').innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('논문 요약 리포트 데이터가 클립보드에 복사되었습니다!');
+            });
+        }
+
+        loadTarget();
+    </script>
+</body>
+</html>
